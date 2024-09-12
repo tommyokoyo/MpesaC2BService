@@ -1,6 +1,7 @@
 package com.openhub.mpesac2bservice.Services;
 
 import com.openhub.mpesac2bservice.Models.MpesaCallback;
+import com.openhub.mpesac2bservice.Models.MpesaCallbackMessage;
 import com.openhub.mpesac2bservice.Models.ResponseModel;
 import com.openhub.mpesac2bservice.Models.TransactionMessage;
 import com.openhub.mpesac2bservice.Utils.RabbitMQConfig;
@@ -130,8 +131,8 @@ public class TransactionService {
     }
 
     @RabbitListener(queues = RabbitMQConfig.CALLBACK_QUEUE)
-    public void lipaNaMpesaCallback(MpesaCallback mpesaCallback) {
+    public void lipaNaMpesaCallback(MpesaCallbackMessage mpesaCallbackMessage) {
         // Dispatch message
-        System.out.println("Successfully received the message on the callback queue, message: " + mpesaCallback);
+        System.out.println("Successfully received the message on the callback queue, message: " + mpesaCallbackMessage);
     }
 }

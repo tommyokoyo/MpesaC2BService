@@ -36,7 +36,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding CallbackBinding(Queue callbackQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(callbackQueue).to(exchange).with(TRANSACTION_QUEUE);
+        return BindingBuilder.bind(callbackQueue).to(exchange).with(CALLBACK_QUEUE);
     }
 
     @Bean

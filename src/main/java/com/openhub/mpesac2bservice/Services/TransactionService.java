@@ -1,9 +1,6 @@
 package com.openhub.mpesac2bservice.Services;
 
-import com.openhub.mpesac2bservice.Models.MpesaCallback;
-import com.openhub.mpesac2bservice.Models.MpesaCallbackMessage;
-import com.openhub.mpesac2bservice.Models.ResponseModel;
-import com.openhub.mpesac2bservice.Models.TransactionMessage;
+import com.openhub.mpesac2bservice.Models.*;
 import com.openhub.mpesac2bservice.Utils.RabbitMQConfig;
 import com.openhub.mpesac2bservice.Utils.Utility;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -18,42 +15,53 @@ import java.util.List;
 public class TransactionService {
     private final Utility utility;
     private final RabbitTemplate rabbitTemplate;
+    private final MpesaRequestService mpesaRequestService;
 
     @Autowired
-    public TransactionService(Utility utility, RabbitTemplate rabbitTemplate) {
+    public TransactionService(Utility utility, RabbitTemplate rabbitTemplate, MpesaRequestService mpesaRequestService) {
         this.utility = utility;
         this.rabbitTemplate = rabbitTemplate;
+        this.mpesaRequestService = mpesaRequestService;
     }
 
-    public ResponseModel lipaNaMpesa(TransactionMessage transactionMessage) {
-        // Set the transactionID and transactionStatus
-        transactionMessage.setTransactionId(utility.generateUUID());
-        transactionMessage.setStatus("Processing");
+    public MpesaExpressResponse lipaNaMpesa(MpesaExpressRequest mpesaExpressRequest) {
         // Add transaction to queue for processing
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TRANSACTION_QUEUE, transactionMessage);
-            // Send the request to Mpesa for processing
-
-            // Return response based on Safaricom response
-            System.out.println("Transaction " + transactionMessage.getTransactionId() + " is being processed");
-            ResponseModel responseModel = new ResponseModel();
-            responseModel.setStatus("success");
-            responseModel.setMessage("Transaction is being processed");
-
-            return responseModel;
-
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TRANSACTION_QUEUE, mpesaExpressRequest);
+            try {
+                // Send request to SIM
+                MpesaExpressResponse mpesaExpressResponse = mpesaRequestService.makeMpesaRequest(mpesaExpressRequest).block();
+                System.out.println("M_SIM response: " + mpesaExpressResponse);
+                // Return response based on SIM response
+                if (mpesaExpressResponse != null) {
+                    return mpesaExpressResponse;
+                } else {
+                    MpesaExpressResponse mpesaExpressErrorResponse = new MpesaExpressResponse();
+                    mpesaExpressErrorResponse.setResponseCode("1");
+                    mpesaExpressErrorResponse.setResponseDescription("Empty Response");
+                    mpesaExpressErrorResponse.setCustomerMessage("Empty Response body");
+                    return mpesaExpressErrorResponse;
+                }
+            }
+            catch (Exception e) {
+                System.out.println("Request failed: "
+                        + e);
+                MpesaExpressResponse mpesaExpressExceptionResponse = new MpesaExpressResponse();
+                mpesaExpressExceptionResponse.setResponseCode("1");
+                mpesaExpressExceptionResponse.setResponseDescription("Service Error");
+                mpesaExpressExceptionResponse.setCustomerMessage("Error fetching data");
+                return mpesaExpressExceptionResponse;
+            }
         } catch (Exception e) {
             System.out.println("Could not add transaction to queue: "
-                    + transactionMessage.getTransactionId()
                     + ": " + e.getMessage());
-            ResponseModel responseModel = new ResponseModel();
-            responseModel.setStatus("Failed");
-            responseModel.setMessage("Error Processing Transaction: ");
-
-            return responseModel;
+            MpesaExpressResponse mpesaExpressExceptionResponse = new MpesaExpressResponse();
+            mpesaExpressExceptionResponse.setResponseCode("1");
+            mpesaExpressExceptionResponse.setResponseDescription("Queue Error");
+            mpesaExpressExceptionResponse.setCustomerMessage("Could not add transaction to queue");
+            return mpesaExpressExceptionResponse;
         }
     }
-
 
     public void lipaNaMpesaDemo(TransactionMessage transactionMessage) {
         System.out.println("Transaction " + transactionMessage.getTransactionId() + " retrieved");

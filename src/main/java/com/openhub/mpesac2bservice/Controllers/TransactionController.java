@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/transaction")
 public class TransactionController {
-    private TransactionService transactionService;
+    private final TransactionService transactionService;
 
     @Autowired
     public TransactionController(TransactionService transactionService) {
@@ -21,27 +21,82 @@ public class TransactionController {
     }
 
     @PostMapping("/lipa-na-mpesa")
-    public ResponseEntity<?> customerToBusiness(@RequestBody TransactionMessage transactionMessage) {
+    public ResponseEntity<?> customerToBusiness(@RequestBody MpesaExpressRequest mpesaExpressRequest) {
         // Check the parameters to ensure no null values
-        if (transactionMessage.getPhoneNumber() == null || transactionMessage.getPhoneNumber().isEmpty()) {
-            return ResponseUtil.buildResponse(HttpStatus.BAD_REQUEST, "Failed", "Missing Phone Number");
-        } else if (transactionMessage.getAmount() == null) {
-            return ResponseUtil.buildResponse(HttpStatus.BAD_REQUEST, "Failed", "Missing Amount");
+        if (mpesaExpressRequest.getBusinessShortCode() == null || mpesaExpressRequest.getBusinessShortCode().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Business Short Code Required");
+        } else if (mpesaExpressRequest.getPassword() == null || mpesaExpressRequest.getPassword().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Password Required");
+        } else if (mpesaExpressRequest.getTimestamp() == null || mpesaExpressRequest.getTimestamp().isEmpty()) {
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Timestamp Required");
+        }else if (mpesaExpressRequest.getTransactionType() == null) {
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Transaction Type Required");
+        } else if (mpesaExpressRequest.getAmount() == null || mpesaExpressRequest.getAmount().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Amount Required");
+        } else if (mpesaExpressRequest.getPartyA() == null || mpesaExpressRequest.getPartyA().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Party A Required");
+        }else if (mpesaExpressRequest.getPartyB() == null || mpesaExpressRequest.getPartyB().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Party B Required");
+        } else if (mpesaExpressRequest.getPhoneNumber() == null || mpesaExpressRequest.getPhoneNumber().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Phone Number Required");
+        }else if (mpesaExpressRequest.getCallBackURL() == null || mpesaExpressRequest.getCallBackURL().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "CallBack URL Required");
+        }else if (mpesaExpressRequest.getAccountReference() == null || mpesaExpressRequest.getAccountReference().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Account Reference Required");
+        }else if (mpesaExpressRequest.getTransactionDesc() == null || mpesaExpressRequest.getTransactionDesc().isEmpty()){
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Parameter",
+                    "Transaction Desc Required");
         }
 
-        ResponseModel responseModel = transactionService.lipaNaMpesa(transactionMessage);
+        MpesaExpressResponse mpesaExpressResponse = transactionService.lipaNaMpesa(mpesaExpressRequest);
 
-        if (responseModel != null && responseModel.getStatus().equals("success")) {
-            return ResponseUtil.buildResponse(HttpStatus.OK, responseModel.getStatus(), responseModel.getMessage());
+        if (mpesaExpressResponse != null) {
+            return ResponseEntity.status(HttpStatus.OK).body(mpesaExpressResponse);
         } else {
-            return ResponseUtil.buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed", "Error Processing Request" );
+            return ResponseUtil.buildMpesaErrorResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Internal Server Error",
+                    "Error Processing request");
         }
-
-
     }
 
     @PostMapping("/callbackStatus")
     public ResponseEntity<?> customerToBusinessCallback() {
-        return ResponseUtil.buildResponse(HttpStatus.OK, "Successful", "Callback Status");
+        return ResponseUtil.buildMpesaErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Success",
+                "Callback reached successfully");
     }
 }

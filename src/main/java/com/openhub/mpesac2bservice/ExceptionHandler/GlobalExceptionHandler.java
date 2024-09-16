@@ -16,49 +16,45 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<?> handleNoResourceFoundException(NoResourceFoundException ex) {
         System.out.println( "HTTP Resource Not Found: " + ex.getMessage());
-        return ResponseUtil.buildResponse(
+        return ResponseUtil.buildMpesaErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Failed",
-                "Resource Not Found");
+                "Resource Not Found Exception",
+                "HTTP Resource Not Found");
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getCause() + " Payload");
         System.out.println( "HTTP message not readable: " + ex.getMessage());
-        return ResponseUtil.buildResponse(
+        return ResponseUtil.buildMpesaErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Error",
+                "Message not readable Exception",
                 "HTTP message not readable");
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<?> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException ex) {
-        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bad Request: " + ex.getMessage());
         System.out.println( "HTTP media type not supported: " + ex.getMessage());
-        return ResponseUtil.buildResponse(
+        return ResponseUtil.buildMpesaErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Error",
+                "Media Type NotSupported Exception",
                 "HTTP media type not supported");
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<?> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
-        //return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bad Request: " + ex.getMessage());
         System.out.println( "HTTP method not supported: " + ex.getMessage());
-        return ResponseUtil.buildResponse(
+        return ResponseUtil.buildMpesaErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Error",
+                "Method Not Supported Exception",
                 "Request method not supported");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<?> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error executing request");
         System.out.println( "Data Integrity Error: " + ex.getMessage());
-        return ResponseUtil.buildResponse(
+        return ResponseUtil.buildMpesaErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Error",
+                "Data Integrity Exception",
                 "Could not execute request");
     }
 }
